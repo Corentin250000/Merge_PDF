@@ -2,77 +2,129 @@ package main
 
 import (
 	"fmt"
+	"os/exec"
+	"strings"
+	"syscall"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
+// ---------------------------
+// Sélecteur d'entrées : multisélection de fichiers
+// ---------------------------
+func selectMultipleFilesWindows() ([]string, error) {
+	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+$fd = New-Object System.Windows.Forms.OpenFileDialog
+$fd.Filter = "PDF files (*.pdf)|*.pdf"
+$fd.Multiselect = $true
+if($fd.ShowDialog() -eq "OK"){ $fd.FileNames }`
+
+	cmd := exec.Command("powershell", "-Command", ps)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // masque la fenêtre PowerShell
+
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	if len(out) == 0 {
+		return nil, nil
+	}
+	files := strings.Split(strings.TrimSpace(string(out)), "\r\n")
+	return files, nil
+}
+
+// ---------------------------
+// Sélecteur de sortie : fichier unique
+// ---------------------------
+func selectSaveFileWindows() (string, error) {
+	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+$fd = New-Object System.Windows.Forms.SaveFileDialog
+$fd.Filter = "PDF files (*.pdf)|*.pdf"
+$fd.FileName = "fusion.pdf"
+if($fd.ShowDialog() -eq "OK"){ $fd.FileName }`
+
+	cmd := exec.Command("powershell", "-Command", ps)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // masque la fenêtre PowerShell
+
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 func main() {
-	// ID unique requis par Fyne pour Preferences API
 	a := app.NewWithID("com.ceramaret.fusionpdf")
 	w := a.NewWindow("Fusion PDF")
-	w.Resize(fyne.NewSize(600, 400))
+	w.Resize(fyne.NewSize(700, 500))
 
 	files := []string{}
-	selectedIndex := -1
+	fileChecks := []*widget.Check{}
+	listContainer := container.NewVBox()
 
-	list := widget.NewList(
-		func() int { return len(files) },
-		func() fyne.CanvasObject { return widget.NewLabel("") },
-		func(i int, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(fmt.Sprintf("%d. %s", i+1, files[i]))
-		},
-	)
-
-	list.OnSelected = func(id int) {
-		selectedIndex = id
+	refreshList := func() {
+		listContainer.Objects = nil
+		fileChecks = []*widget.Check{}
+		for _, f := range files {
+			chk := widget.NewCheck(f, nil)
+			fileChecks = append(fileChecks, chk)
+			listContainer.Add(chk)
+		}
+		listContainer.Refresh()
 	}
 
-	btnAdd := widget.NewButton("Ajouter PDF", func() {
-		fd := dialog.NewFileOpen(func(r fyne.URIReadCloser, _ error) {
-			if r == nil {
-				return
-			}
-			files = append(files, r.URI().Path())
-			list.Refresh()
-		}, w)
-		fd.SetFilter(storage.NewExtensionFileFilter([]string{".pdf"}))
-		fd.Show()
+	// --- Boutons ---
+	btnAdd := widget.NewButton("Ajouter PDF(s)", func() {
+		selectedFiles, err := selectMultipleFilesWindows()
+		if err != nil {
+			dialog.ShowError(err, w)
+			return
+		}
+		if selectedFiles != nil {
+			files = append(files, selectedFiles...)
+			refreshList()
+		}
 	})
 
 	btnRemove := widget.NewButton("Supprimer", func() {
-		if selectedIndex >= 0 && selectedIndex < len(files) {
-			files = append(files[:selectedIndex], files[selectedIndex+1:]...)
-			list.Refresh()
-			selectedIndex = -1
+		newFiles := []string{}
+		for i, chk := range fileChecks {
+			if !chk.Checked {
+				newFiles = append(newFiles, files[i])
+			}
 		}
+		files = newFiles
+		refreshList()
 	})
 
 	btnUp := widget.NewButton("Monter", func() {
-		if selectedIndex > 0 {
-			files[selectedIndex], files[selectedIndex-1] = files[selectedIndex-1], files[selectedIndex]
-			list.Refresh()
-			list.Select(selectedIndex - 1)
+		for i := 1; i < len(files); i++ {
+			if fileChecks[i].Checked && !fileChecks[i-1].Checked {
+				files[i], files[i-1] = files[i-1], files[i]
+				fileChecks[i].Checked, fileChecks[i-1].Checked = false, true
+			}
 		}
+		refreshList()
 	})
 
 	btnDown := widget.NewButton("Descendre", func() {
-		if selectedIndex >= 0 && selectedIndex < len(files)-1 {
-			files[selectedIndex], files[selectedIndex+1] = files[selectedIndex+1], files[selectedIndex]
-			list.Refresh()
-			list.Select(selectedIndex + 1)
+		for i := len(files) - 2; i >= 0; i-- {
+			if fileChecks[i].Checked && !fileChecks[i+1].Checked {
+				files[i], files[i+1] = files[i+1], files[i]
+				fileChecks[i].Checked, fileChecks[i+1].Checked = false, true
+			}
 		}
+		refreshList()
 	})
 
 	btnClear := widget.NewButton("Effacer la liste", func() {
 		files = []string{}
-		list.Refresh()
-		selectedIndex = -1
+		refreshList()
 	})
 
 	btnMerge := widget.NewButton("Fusionner", func() {
@@ -80,69 +132,56 @@ func main() {
 			dialog.ShowInformation("Erreur", "Aucun fichier à fusionner", w)
 			return
 		}
-		save := dialog.NewFileSave(func(uc fyne.URIWriteCloser, _ error) {
-			if uc == nil {
-				return
-			}
-			defer uc.Close()
-			err := api.MergeCreateFile(files, uc.URI().Path(), false, nil)
-			if err != nil {
-				dialog.ShowError(fmt.Errorf("échec fusion: %w", err), w)
-				return
-			}
-			dialog.ShowInformation("Succès", "Fusion terminée : "+uc.URI().Path(), w)
-		}, w)
-		save.SetFileName("fusion.pdf")
-		save.Show()
+		outFile, err := selectSaveFileWindows()
+		if err != nil || outFile == "" {
+			return
+		}
+		err = api.MergeCreateFile(files, outFile, false, nil)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("échec fusion: %w", err), w)
+			return
+		}
+		dialog.ShowInformation("Succès", "Fusion terminée : "+outFile, w)
 	})
 
-	docText := `=== Documentation – Fusion PDF ===
+	docText := `=== Documentation - Fusion PDF ===
 
 1. Ajouter des fichiers PDF
-   Cliquez sur "Ajouter PDF" et sélectionnez un ou plusieurs fichiers.
-   Ils apparaissent dans la liste.
+   Cliquez sur "Ajouter PDF(s)" et sélectionnez un ou plusieurs fichiers.
 
 2. Organiser l'ordre
-   Sélectionnez un fichier et utilisez "Monter" ou "Descendre".
+   Cochez un ou plusieurs fichiers puis utilisez "Monter" ou "Descendre".
    L'ordre affiché sera l'ordre final des pages.
 
 3. Supprimer ou effacer
-   - "Supprimer" enlève uniquement le fichier sélectionné.
+   - "Supprimer" enlève uniquement les fichiers cochés.
    - "Effacer la liste" vide complètement la sélection.
 
 4. Fusionner
    Cliquez sur "Fusionner" et choisissez un nom de fichier final.
    Le programme génère un PDF unique.
 
---- Messages d'erreur fréquents ---
-
-- "Fichier verrouillé" :
-   Le PDF est ouvert dans Acrobat Reader ou Edge.
-   Fermez le fichier et recommencez.
-
-- "Aucun fichier à fusionner" :
-   Vous avez cliqué sur Fusionner sans rien ajouter.
-
 --- ⚠️ Bug connu ---
-Si vous choisissez comme fichier de sortie un PDF
-qui est déjà présent dans la liste à fusionner :
+Si vous choisissez comme fichier de sortie un PDF déjà présent dans la liste :
 - le fichier final sera vide et corrompu
 - le programme indiquera que le fichier est vide
 
 Solution :
-Toujours donner un nom différent au fichier final,
-par exemple "fusion_result.pdf".`
+Toujours donner un nom différent au fichier final (ex: fusion_result.pdf).`
 
 	btnDoc := widget.NewButton("Documentation", func() {
 		dialog.ShowInformation("Documentation", docText, w)
 	})
 
-	// Organisation des boutons
-	buttons := container.NewVBox(
-		btnAdd, btnRemove, btnUp, btnDown, btnClear, btnMerge, btnDoc,
-	)
-	content := container.NewHSplit(list, buttons)
-	content.Offset = 0.7
+	// --- Layout ---
+	scroll := container.NewVScroll(listContainer)
+	scroll.SetMinSize(fyne.NewSize(450, 400))
+
+	buttons := container.NewVBox(btnAdd, btnRemove, btnUp, btnDown, btnClear, btnMerge, btnDoc)
+	content := container.NewHSplit(scroll, buttons)
+	content.Offset = 0.75
 	w.SetContent(content)
+
+	refreshList()
 	w.ShowAndRun()
 }
