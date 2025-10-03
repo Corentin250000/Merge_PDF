@@ -29,20 +29,12 @@ https://github.com/Ceramaret-SA/Merge_PDF.git
 cd FusionPDF
 ```
 
-### 3. Initialiser les dépendences
+### 3. Initialiser les dépendances
 ```bash
 go mod tidy
 ```
 
 ### 4. Compilation
-
-- Application GUI avec console (débogage) :
-
-    ```bash
-    go build -ldflags "-s -w" -o FusionPDF.exe main.go
-    ```
-
-- Application GUI sans console (production) :
 
     ```bash
     go build -ldflags "-s -w -H=windowsgui" -o FusionPDF.exe main.go
