@@ -25,11 +25,11 @@ L’application génère un **binaire unique et portable**, utilisable sans dép
 
 ### 2. Cloner le projet
 ```bash
-git clone https://github.com/<user>/FusionPDF.git
+https://github.com/Ceramaret-SA/Merge_PDF.git
 cd FusionPDF
 ```
 
-### 3. Initialiser les dépendences (uniquement pour la compilation)
+### 3. Initialiser les dépendences
 ```bash
 go mod tidy
 ```
