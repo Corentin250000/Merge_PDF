@@ -1,0 +1,14 @@
+{
+  "AddPDF": "Aggiungi PDF",
+  "Remove": "Rimuovi",
+  "MoveUp": "Sposta su",
+  "MoveDown": "Sposta giù",
+  "ClearList": "Cancella elenco",
+  "Merge": "Unisci",
+  "Documentation": "Documentazione",
+  "ErrorNoFiles": "Nessun file da unire.",
+  "SuccessMerged": "Unione completata:",
+  "WindowTitle": "Unione PDF",
+  "DocTitle": "Documentazione - Unione PDF",
+  "DocText": "1. Aggiungi file PDF\n   Clicca su \"Aggiungi PDF\" per selezionare uno o più file.\n\n2. Ordina\n   Usa \"Sposta su\" e \"Sposta giù\" per modificare l'ordine.\n\n3. Rimuovi o cancella\n   \"Rimuovi\" elimina i file selezionati.\n   \"Cancella elenco\" rimuove tutti i file.\n\n4. Unisci\n   Clicca su \"Unisci\" e scegli il nome del file di uscita.\n\n⚠ Problema noto:\nSe scegli come file di uscita un PDF già presente nella lista, il file risultante sarà vuoto e danneggiato."
+}

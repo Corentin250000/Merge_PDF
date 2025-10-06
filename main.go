@@ -34,12 +34,12 @@ func GetWindowsLangCode() string {
 		return "en"
 	case 0x0C, 0x3C, 0x40, 0x80:
 		return "fr"
-	// case 0x07:
-	// 	return "de"
-	// case 0x0A:
-	// 	return "es"
-	// case 0x10:
-	// 	return "it"
+	case 0x07:
+		return "de"
+	case 0x0A:
+		return "es"
+	case 0x10:
+		return "it"
 	default:
 		return "en" // fallback
 	}
@@ -54,8 +54,11 @@ func initI18n(lang string) {
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 	bundle.LoadMessageFile("lang/active.en.json")
 	bundle.LoadMessageFile("lang/active.fr.json")
+	bundle.LoadMessageFile("lang/active.de.json")
+	bundle.LoadMessageFile("lang/active.es.json")
+	bundle.LoadMessageFile("lang/active.it.json")
 
-	if lang != "fr" && lang != "en" {
+	if lang != "fr" && lang != "en" && lang != "de" && lang != "es" && lang != "it" {
 		lang = "en"
 	}
 
@@ -197,10 +200,17 @@ func main() {
 		dialog.ShowInformation(t("DocTitle"), t("DocText"), w)
 	})
 
-	langSelect := widget.NewSelect([]string{"English", "Français"}, func(choice string) {
+	// --- Language selector ---
+	langSelect := widget.NewSelect([]string{"English", "Français", "Deutsch", "Español", "Italiano"}, func(choice string) {
 		switch choice {
 		case "Français":
 			initI18n("fr")
+		case "Deutsch":
+			initI18n("de")
+		case "Español":
+			initI18n("es")
+		case "Italiano":
+			initI18n("it")
 		default:
 			initI18n("en")
 		}
@@ -214,9 +224,17 @@ func main() {
 		btnDoc.SetText(t("Documentation"))
 		w.Content().Refresh()
 	})
-	if systemLang == "fr" {
+
+	switch systemLang {
+	case "fr":
 		langSelect.SetSelected("Français")
-	} else {
+	case "de":
+		langSelect.SetSelected("Deutsch")
+	case "es":
+		langSelect.SetSelected("Español")
+	case "it":
+		langSelect.SetSelected("Italiano")
+	default:
 		langSelect.SetSelected("English")
 	}
 
