@@ -15,7 +15,7 @@ import (
 )
 
 // ---------------------------
-// Sélecteur d'entrées : multisélection de fichiers
+// Windows file picker (multi-selection)
 // ---------------------------
 func selectMultipleFilesWindows() ([]string, error) {
 	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
@@ -25,7 +25,7 @@ $fd.Multiselect = $true
 if($fd.ShowDialog() -eq "OK"){ $fd.FileNames }`
 
 	cmd := exec.Command("powershell", "-Command", ps)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // masque la fenêtre PowerShell
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -39,17 +39,17 @@ if($fd.ShowDialog() -eq "OK"){ $fd.FileNames }`
 }
 
 // ---------------------------
-// Sélecteur de sortie : fichier unique
+// Windows save file dialog
 // ---------------------------
 func selectSaveFileWindows() (string, error) {
 	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
 $fd = New-Object System.Windows.Forms.SaveFileDialog
 $fd.Filter = "PDF files (*.pdf)|*.pdf"
-$fd.FileName = "fusion.pdf"
+$fd.FileName = "merged.pdf"
 if($fd.ShowDialog() -eq "OK"){ $fd.FileName }`
 
 	cmd := exec.Command("powershell", "-Command", ps)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // masque la fenêtre PowerShell
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -60,7 +60,7 @@ if($fd.ShowDialog() -eq "OK"){ $fd.FileName }`
 
 func main() {
 	a := app.NewWithID("com.ceramaret.fusionpdf")
-	w := a.NewWindow("Fusion PDF")
+	w := a.NewWindow("PDF Merger")
 	w.Resize(fyne.NewSize(700, 500))
 
 	files := []string{}
@@ -78,8 +78,8 @@ func main() {
 		listContainer.Refresh()
 	}
 
-	// --- Boutons ---
-	btnAdd := widget.NewButton("Ajouter PDF(s)", func() {
+	// --- Buttons ---
+	btnAdd := widget.NewButton("Add PDF(s)", func() {
 		selectedFiles, err := selectMultipleFilesWindows()
 		if err != nil {
 			dialog.ShowError(err, w)
@@ -91,7 +91,7 @@ func main() {
 		}
 	})
 
-	btnRemove := widget.NewButton("Supprimer", func() {
+	btnRemove := widget.NewButton("Remove", func() {
 		newFiles := []string{}
 		for i, chk := range fileChecks {
 			if !chk.Checked {
@@ -102,7 +102,7 @@ func main() {
 		refreshList()
 	})
 
-	btnUp := widget.NewButton("Monter", func() {
+	btnUp := widget.NewButton("Move Up", func() {
 		for i := 1; i < len(files); i++ {
 			if fileChecks[i].Checked && !fileChecks[i-1].Checked {
 				files[i], files[i-1] = files[i-1], files[i]
@@ -112,7 +112,7 @@ func main() {
 		refreshList()
 	})
 
-	btnDown := widget.NewButton("Descendre", func() {
+	btnDown := widget.NewButton("Move Down", func() {
 		for i := len(files) - 2; i >= 0; i-- {
 			if fileChecks[i].Checked && !fileChecks[i+1].Checked {
 				files[i], files[i+1] = files[i+1], files[i]
@@ -122,14 +122,14 @@ func main() {
 		refreshList()
 	})
 
-	btnClear := widget.NewButton("Effacer la liste", func() {
+	btnClear := widget.NewButton("Clear List", func() {
 		files = []string{}
 		refreshList()
 	})
 
-	btnMerge := widget.NewButton("Fusionner", func() {
+	btnMerge := widget.NewButton("Merge", func() {
 		if len(files) == 0 {
-			dialog.ShowInformation("Erreur", "Aucun fichier à fusionner", w)
+			dialog.ShowInformation("Error", "No files to merge.", w)
 			return
 		}
 		outFile, err := selectSaveFileWindows()
@@ -138,36 +138,36 @@ func main() {
 		}
 		err = api.MergeCreateFile(files, outFile, false, nil)
 		if err != nil {
-			dialog.ShowError(fmt.Errorf("échec fusion: %w", err), w)
+			dialog.ShowError(fmt.Errorf("Merge failed: %w", err), w)
 			return
 		}
-		dialog.ShowInformation("Succès", "Fusion terminée : "+outFile, w)
+		dialog.ShowInformation("Success", "Merged successfully:\n"+outFile, w)
 	})
 
-	docText := `=== Documentation - Fusion PDF ===
+	docText := `=== PDF Merger - Documentation ===
 
-1. Ajouter des fichiers PDF
-   Cliquez sur "Ajouter PDF(s)" et sélectionnez un ou plusieurs fichiers.
+1. Add PDF files
+   Click "Add PDF(s)" to select one or more PDF files.
 
-2. Organiser l'ordre
-   Cochez un ou plusieurs fichiers puis utilisez "Monter" ou "Descendre".
-   L'ordre affiché sera l'ordre final des pages.
+2. Arrange the order
+   Check one or more files, then click "Move Up" or "Move Down".
+   The order shown will be the order of pages in the final PDF.
 
-3. Supprimer ou effacer
-   - "Supprimer" enlève uniquement les fichiers cochés.
-   - "Effacer la liste" vide complètement la sélection.
+3. Remove or clear
+   - "Remove" deletes only the checked files.
+   - "Clear List" removes all files from the list.
 
-4. Fusionner
-   Cliquez sur "Fusionner" et choisissez un nom de fichier final.
-   Le programme génère un PDF unique.
+4. Merge
+   Click "Merge" and choose a destination file name.
+   The software will create a single merged PDF file.
 
---- ⚠️ Bug connu ---
-Si vous choisissez comme fichier de sortie un PDF déjà présent dans la liste :
-- le fichier final sera vide et corrompu
-- le programme indiquera que le fichier est vide
+--- ⚠️ Known Issue ---
+If you choose as output file a PDF that is already in the list:
+- the resulting file will be empty and corrupted
+- the program will report it as an empty file
 
-Solution :
-Toujours donner un nom différent au fichier final (ex: fusion_result.pdf).`
+Solution:
+Always use a different name for the output file (e.g. merged_result.pdf).`
 
 	btnDoc := widget.NewButton("Documentation", func() {
 		dialog.ShowInformation("Documentation", docText, w)
