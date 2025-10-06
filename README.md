@@ -85,5 +85,5 @@ A **“Documentation”** button in the interface opens a user guide containing:
 
 - [Fyne](https://fyne.io) – BSD  
 - [pdfcpu](https://github.com/pdfcpu/pdfcpu) – Apache 2.0  
-- [https://github.com/nicksnyder/go-i18n](go-i18n) – MIT
+- [go-i18n](https://github.com/nicksnyder/go-i18n) – MIT
 - This project may be used for **commercial purposes**. 
