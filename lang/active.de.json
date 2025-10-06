@@ -1,0 +1,14 @@
+{
+  "AddPDF": "PDF(s) hinzufügen",
+  "Remove": "Entfernen",
+  "MoveUp": "Nach oben",
+  "MoveDown": "Nach unten",
+  "ClearList": "Liste löschen",
+  "Merge": "Zusammenführen",
+  "Documentation": "Dokumentation",
+  "ErrorNoFiles": "Keine Dateien zum Zusammenführen.",
+  "SuccessMerged": "Erfolgreich zusammengeführt:",
+  "WindowTitle": "PDF-Zusammenführung",
+  "DocTitle": "Dokumentation - PDF-Zusammenführung",
+  "DocText": "1. PDF-Dateien hinzufügen\n   Klicken Sie auf \"PDF(s) hinzufügen\", um eine oder mehrere Dateien auszuwählen.\n\n2. Reihenfolge anpassen\n   Verwenden Sie \"Nach oben\" und \"Nach unten\", um die Reihenfolge zu ändern.\n\n3. Entfernen oder löschen\n   \"Entfernen\" löscht ausgewählte Dateien.\n   \"Liste löschen\" entfernt alle Dateien.\n\n4. Zusammenführen\n   Klicken Sie auf \"Zusammenführen\" und wählen Sie einen Ausgabedateinamen.\n\n⚠ Bekanntes Problem:\nWenn Sie als Ausgabedatei eine Datei aus der Liste wählen, wird die resultierende Datei leer und beschädigt sein."
+}

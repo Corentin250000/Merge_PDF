@@ -1,6 +1,8 @@
 package main
 
 import (
+	"embed"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -11,21 +13,89 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"golang.org/x/text/language"
 )
 
-// ---------------------------
-// Sélecteur d'entrées : multisélection de fichiers
-// ---------------------------
+//go:embed lang/active.en.json
+//go:embed lang/active.fr.json
+//go:embed lang/active.de.json
+//go:embed lang/active.es.json
+//go:embed lang/active.it.json
+var embeddedLangFiles embed.FS
+
+// Windows API for system language detection
+var (
+	kernel32               = syscall.NewLazyDLL("kernel32.dll")
+	procGetUserDefaultLang = kernel32.NewProc("GetUserDefaultUILanguage")
+)
+
+// GetWindowsLangCode returns a two-letter ISO code (e.g., "en", "fr")
+func GetWindowsLangCode() string {
+	r1, _, _ := procGetUserDefaultLang.Call()
+	langID := uint16(r1)
+	primaryLangID := langID & 0x3FF
+
+	switch primaryLangID {
+	case 0x09:
+		return "en"
+	case 0x0C, 0x3C, 0x40, 0x80:
+		return "fr"
+	case 0x07:
+		return "de"
+	case 0x0A:
+		return "es"
+	case 0x10:
+		return "it"
+	default:
+		return "en" // fallback
+	}
+}
+
+var localizer *i18n.Localizer
+var currentLang string
+
+// -------- Load translations from embedded JSON --------
+func initI18n(lang string) {
+	bundle := i18n.NewBundle(language.English)
+	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+
+	files := []string{
+		"lang/active.en.json",
+		"lang/active.fr.json",
+		"lang/active.de.json",
+		"lang/active.es.json",
+		"lang/active.it.json",
+	}
+	for _, f := range files {
+		data, err := embeddedLangFiles.ReadFile(f)
+		if err == nil {
+			bundle.MustParseMessageFileBytes(data, f)
+		}
+	}
+
+	if lang != "fr" && lang != "en" && lang != "de" && lang != "es" && lang != "it" {
+		lang = "en"
+	}
+
+	localizer = i18n.NewLocalizer(bundle, lang)
+	currentLang = lang
+}
+
+func t(id string) string {
+	return localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: id})
+}
+
+// -------- Windows dialogs --------
 func selectMultipleFilesWindows() ([]string, error) {
 	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
 $fd = New-Object System.Windows.Forms.OpenFileDialog
 $fd.Filter = "PDF files (*.pdf)|*.pdf"
 $fd.Multiselect = $true
 if($fd.ShowDialog() -eq "OK"){ $fd.FileNames }`
-
 	cmd := exec.Command("powershell", "-Command", ps)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // masque la fenêtre PowerShell
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -38,18 +108,14 @@ if($fd.ShowDialog() -eq "OK"){ $fd.FileNames }`
 	return files, nil
 }
 
-// ---------------------------
-// Sélecteur de sortie : fichier unique
-// ---------------------------
 func selectSaveFileWindows() (string, error) {
 	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
 $fd = New-Object System.Windows.Forms.SaveFileDialog
 $fd.Filter = "PDF files (*.pdf)|*.pdf"
-$fd.FileName = "fusion.pdf"
+$fd.FileName = "merged.pdf"
 if($fd.ShowDialog() -eq "OK"){ $fd.FileName }`
-
 	cmd := exec.Command("powershell", "-Command", ps)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // masque la fenêtre PowerShell
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -58,9 +124,13 @@ if($fd.ShowDialog() -eq "OK"){ $fd.FileName }`
 	return strings.TrimSpace(string(out)), nil
 }
 
+// -------- Main --------
 func main() {
+	systemLang := GetWindowsLangCode()
+	initI18n(systemLang)
+
 	a := app.NewWithID("com.ceramaret.fusionpdf")
-	w := a.NewWindow("Fusion PDF")
+	w := a.NewWindow(t("WindowTitle"))
 	w.Resize(fyne.NewSize(700, 500))
 
 	files := []string{}
@@ -78,8 +148,7 @@ func main() {
 		listContainer.Refresh()
 	}
 
-	// --- Boutons ---
-	btnAdd := widget.NewButton("Ajouter PDF(s)", func() {
+	btnAdd := widget.NewButton(t("AddPDF"), func() {
 		selectedFiles, err := selectMultipleFilesWindows()
 		if err != nil {
 			dialog.ShowError(err, w)
@@ -91,7 +160,7 @@ func main() {
 		}
 	})
 
-	btnRemove := widget.NewButton("Supprimer", func() {
+	btnRemove := widget.NewButton(t("Remove"), func() {
 		newFiles := []string{}
 		for i, chk := range fileChecks {
 			if !chk.Checked {
@@ -102,7 +171,7 @@ func main() {
 		refreshList()
 	})
 
-	btnUp := widget.NewButton("Monter", func() {
+	btnUp := widget.NewButton(t("MoveUp"), func() {
 		for i := 1; i < len(files); i++ {
 			if fileChecks[i].Checked && !fileChecks[i-1].Checked {
 				files[i], files[i-1] = files[i-1], files[i]
@@ -112,7 +181,7 @@ func main() {
 		refreshList()
 	})
 
-	btnDown := widget.NewButton("Descendre", func() {
+	btnDown := widget.NewButton(t("MoveDown"), func() {
 		for i := len(files) - 2; i >= 0; i-- {
 			if fileChecks[i].Checked && !fileChecks[i+1].Checked {
 				files[i], files[i+1] = files[i+1], files[i]
@@ -122,14 +191,14 @@ func main() {
 		refreshList()
 	})
 
-	btnClear := widget.NewButton("Effacer la liste", func() {
+	btnClear := widget.NewButton(t("ClearList"), func() {
 		files = []string{}
 		refreshList()
 	})
 
-	btnMerge := widget.NewButton("Fusionner", func() {
+	btnMerge := widget.NewButton(t("Merge"), func() {
 		if len(files) == 0 {
-			dialog.ShowInformation("Erreur", "Aucun fichier à fusionner", w)
+			dialog.ShowInformation("Error", t("ErrorNoFiles"), w)
 			return
 		}
 		outFile, err := selectSaveFileWindows()
@@ -138,46 +207,56 @@ func main() {
 		}
 		err = api.MergeCreateFile(files, outFile, false, nil)
 		if err != nil {
-			dialog.ShowError(fmt.Errorf("échec fusion: %w", err), w)
+			dialog.ShowError(fmt.Errorf("Merge failed: %w", err), w)
 			return
 		}
-		dialog.ShowInformation("Succès", "Fusion terminée : "+outFile, w)
+		dialog.ShowInformation("Success", t("SuccessMerged")+" "+outFile, w)
 	})
 
-	docText := `=== Documentation - Fusion PDF ===
-
-1. Ajouter des fichiers PDF
-   Cliquez sur "Ajouter PDF(s)" et sélectionnez un ou plusieurs fichiers.
-
-2. Organiser l'ordre
-   Cochez un ou plusieurs fichiers puis utilisez "Monter" ou "Descendre".
-   L'ordre affiché sera l'ordre final des pages.
-
-3. Supprimer ou effacer
-   - "Supprimer" enlève uniquement les fichiers cochés.
-   - "Effacer la liste" vide complètement la sélection.
-
-4. Fusionner
-   Cliquez sur "Fusionner" et choisissez un nom de fichier final.
-   Le programme génère un PDF unique.
-
---- ⚠️ Bug connu ---
-Si vous choisissez comme fichier de sortie un PDF déjà présent dans la liste :
-- le fichier final sera vide et corrompu
-- le programme indiquera que le fichier est vide
-
-Solution :
-Toujours donner un nom différent au fichier final (ex: fusion_result.pdf).`
-
-	btnDoc := widget.NewButton("Documentation", func() {
-		dialog.ShowInformation("Documentation", docText, w)
+	btnDoc := widget.NewButton(t("Documentation"), func() {
+		dialog.ShowInformation(t("DocTitle"), t("DocText"), w)
 	})
 
-	// --- Layout ---
+	langSelect := widget.NewSelect([]string{"English", "Français", "Deutsch", "Español", "Italiano"}, func(choice string) {
+		switch choice {
+		case "Français":
+			initI18n("fr")
+		case "Deutsch":
+			initI18n("de")
+		case "Español":
+			initI18n("es")
+		case "Italiano":
+			initI18n("it")
+		default:
+			initI18n("en")
+		}
+		w.SetTitle(t("WindowTitle"))
+		btnAdd.SetText(t("AddPDF"))
+		btnRemove.SetText(t("Remove"))
+		btnUp.SetText(t("MoveUp"))
+		btnDown.SetText(t("MoveDown"))
+		btnClear.SetText(t("ClearList"))
+		btnMerge.SetText(t("Merge"))
+		btnDoc.SetText(t("Documentation"))
+		w.Content().Refresh()
+	})
+
+	switch systemLang {
+	case "fr":
+		langSelect.SetSelected("Français")
+	case "de":
+		langSelect.SetSelected("Deutsch")
+	case "es":
+		langSelect.SetSelected("Español")
+	case "it":
+		langSelect.SetSelected("Italiano")
+	default:
+		langSelect.SetSelected("English")
+	}
+
 	scroll := container.NewVScroll(listContainer)
 	scroll.SetMinSize(fyne.NewSize(450, 400))
-
-	buttons := container.NewVBox(btnAdd, btnRemove, btnUp, btnDown, btnClear, btnMerge, btnDoc)
+	buttons := container.NewVBox(langSelect, btnAdd, btnRemove, btnUp, btnDown, btnClear, btnMerge, btnDoc)
 	content := container.NewHSplit(scroll, buttons)
 	content.Offset = 0.75
 	w.SetContent(content)

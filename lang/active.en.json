@@ -1,0 +1,14 @@
+{
+  "AddPDF": "Add PDF(s)",
+  "Remove": "Remove",
+  "MoveUp": "Move Up",
+  "MoveDown": "Move Down",
+  "ClearList": "Clear List",
+  "Merge": "Merge",
+  "Documentation": "Documentation",
+  "ErrorNoFiles": "No files to merge.",
+  "SuccessMerged": "Merged successfully:",
+  "WindowTitle": "PDF Merger",
+  "DocTitle": "Documentation - PDF Merger",
+  "DocText": "1. Add PDF files\n   Click \"Add PDF(s)\" to select one or more PDF files.\n\n2. Arrange order\n   Use \"Move Up\" and \"Move Down\" to reorder.\n\n3. Remove or clear\n   \"Remove\" deletes selected files.\n   \"Clear List\" empties the list.\n\n4. Merge\n   Click \"Merge\" and choose an output name.\n\n⚠ Known issue:\nIf you use an existing file from the list as output, it will be empty and corrupted."
+}
