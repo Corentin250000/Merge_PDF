@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -16,6 +17,13 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"golang.org/x/text/language"
 )
+
+//go:embed lang/active.en.json
+//go:embed lang/active.fr.json
+//go:embed lang/active.de.json
+//go:embed lang/active.es.json
+//go:embed lang/active.it.json
+var embeddedLangFiles embed.FS
 
 // Windows API for system language detection
 var (
@@ -48,15 +56,24 @@ func GetWindowsLangCode() string {
 var localizer *i18n.Localizer
 var currentLang string
 
-// -------- Load translations --------
+// -------- Load translations from embedded JSON --------
 func initI18n(lang string) {
 	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
-	bundle.LoadMessageFile("lang/active.en.json")
-	bundle.LoadMessageFile("lang/active.fr.json")
-	bundle.LoadMessageFile("lang/active.de.json")
-	bundle.LoadMessageFile("lang/active.es.json")
-	bundle.LoadMessageFile("lang/active.it.json")
+
+	files := []string{
+		"lang/active.en.json",
+		"lang/active.fr.json",
+		"lang/active.de.json",
+		"lang/active.es.json",
+		"lang/active.it.json",
+	}
+	for _, f := range files {
+		data, err := embeddedLangFiles.ReadFile(f)
+		if err == nil {
+			bundle.MustParseMessageFileBytes(data, f)
+		}
+	}
 
 	if lang != "fr" && lang != "en" && lang != "de" && lang != "es" && lang != "it" {
 		lang = "en"
@@ -200,7 +217,6 @@ func main() {
 		dialog.ShowInformation(t("DocTitle"), t("DocText"), w)
 	})
 
-	// --- Language selector ---
 	langSelect := widget.NewSelect([]string{"English", "Français", "Deutsch", "Español", "Italiano"}, func(choice string) {
 		switch choice {
 		case "Français":
