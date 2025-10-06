@@ -1,0 +1,14 @@
+{
+  "AddPDF": "Ajouter PDF(s)",
+  "Remove": "Supprimer",
+  "MoveUp": "Monter",
+  "MoveDown": "Descendre",
+  "ClearList": "Effacer la liste",
+  "Merge": "Fusionner",
+  "Documentation": "Documentation",
+  "ErrorNoFiles": "Aucun fichier à fusionner.",
+  "SuccessMerged": "Fusion terminée :",
+  "WindowTitle": "Fusion PDF",
+  "DocTitle": "Documentation - Fusion PDF",
+  "DocText": "1. Ajouter des fichiers PDF\n   Cliquez sur \"Ajouter PDF(s)\" pour sélectionner un ou plusieurs fichiers.\n\n2. Organiser l'ordre\n   Utilisez \"Monter\" et \"Descendre\" pour réorganiser.\n\n3. Supprimer ou effacer\n   \"Supprimer\" enlève les fichiers cochés.\n   \"Effacer la liste\" vide complètement la sélection.\n\n4. Fusionner\n   Cliquez sur \"Fusionner\" et choisissez un nom de sortie.\n\n⚠ Problème connu :\nSi vous choisissez comme fichier de sortie un fichier déjà présent dans la liste, il sera vide et corrompu."
+}

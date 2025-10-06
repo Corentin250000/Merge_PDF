@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -11,19 +12,68 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"golang.org/x/text/language"
 )
 
-// ---------------------------
-// Windows file picker (multi-selection)
-// ---------------------------
+// Windows API for system language detection
+var (
+	kernel32               = syscall.NewLazyDLL("kernel32.dll")
+	procGetUserDefaultLang = kernel32.NewProc("GetUserDefaultUILanguage")
+)
+
+// GetWindowsLangCode returns a two-letter ISO code (e.g., "en", "fr")
+func GetWindowsLangCode() string {
+	r1, _, _ := procGetUserDefaultLang.Call()
+	langID := uint16(r1)
+	primaryLangID := langID & 0x3FF
+
+	switch primaryLangID {
+	case 0x09:
+		return "en"
+	case 0x0C, 0x3C, 0x40, 0x80:
+		return "fr"
+	// case 0x07:
+	// 	return "de"
+	// case 0x0A:
+	// 	return "es"
+	// case 0x10:
+	// 	return "it"
+	default:
+		return "en" // fallback
+	}
+}
+
+var localizer *i18n.Localizer
+var currentLang string
+
+// -------- Load translations --------
+func initI18n(lang string) {
+	bundle := i18n.NewBundle(language.English)
+	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+	bundle.LoadMessageFile("lang/active.en.json")
+	bundle.LoadMessageFile("lang/active.fr.json")
+
+	if lang != "fr" && lang != "en" {
+		lang = "en"
+	}
+
+	localizer = i18n.NewLocalizer(bundle, lang)
+	currentLang = lang
+}
+
+func t(id string) string {
+	return localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: id})
+}
+
+// -------- Windows dialogs --------
 func selectMultipleFilesWindows() ([]string, error) {
 	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
 $fd = New-Object System.Windows.Forms.OpenFileDialog
 $fd.Filter = "PDF files (*.pdf)|*.pdf"
 $fd.Multiselect = $true
 if($fd.ShowDialog() -eq "OK"){ $fd.FileNames }`
-
 	cmd := exec.Command("powershell", "-Command", ps)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
@@ -38,16 +88,12 @@ if($fd.ShowDialog() -eq "OK"){ $fd.FileNames }`
 	return files, nil
 }
 
-// ---------------------------
-// Windows save file dialog
-// ---------------------------
 func selectSaveFileWindows() (string, error) {
 	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
 $fd = New-Object System.Windows.Forms.SaveFileDialog
 $fd.Filter = "PDF files (*.pdf)|*.pdf"
 $fd.FileName = "merged.pdf"
 if($fd.ShowDialog() -eq "OK"){ $fd.FileName }`
-
 	cmd := exec.Command("powershell", "-Command", ps)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
@@ -58,9 +104,13 @@ if($fd.ShowDialog() -eq "OK"){ $fd.FileName }`
 	return strings.TrimSpace(string(out)), nil
 }
 
+// -------- Main --------
 func main() {
+	systemLang := GetWindowsLangCode()
+	initI18n(systemLang)
+
 	a := app.NewWithID("com.ceramaret.fusionpdf")
-	w := a.NewWindow("PDF Merger")
+	w := a.NewWindow(t("WindowTitle"))
 	w.Resize(fyne.NewSize(700, 500))
 
 	files := []string{}
@@ -78,8 +128,7 @@ func main() {
 		listContainer.Refresh()
 	}
 
-	// --- Buttons ---
-	btnAdd := widget.NewButton("Add PDF(s)", func() {
+	btnAdd := widget.NewButton(t("AddPDF"), func() {
 		selectedFiles, err := selectMultipleFilesWindows()
 		if err != nil {
 			dialog.ShowError(err, w)
@@ -91,7 +140,7 @@ func main() {
 		}
 	})
 
-	btnRemove := widget.NewButton("Remove", func() {
+	btnRemove := widget.NewButton(t("Remove"), func() {
 		newFiles := []string{}
 		for i, chk := range fileChecks {
 			if !chk.Checked {
@@ -102,7 +151,7 @@ func main() {
 		refreshList()
 	})
 
-	btnUp := widget.NewButton("Move Up", func() {
+	btnUp := widget.NewButton(t("MoveUp"), func() {
 		for i := 1; i < len(files); i++ {
 			if fileChecks[i].Checked && !fileChecks[i-1].Checked {
 				files[i], files[i-1] = files[i-1], files[i]
@@ -112,7 +161,7 @@ func main() {
 		refreshList()
 	})
 
-	btnDown := widget.NewButton("Move Down", func() {
+	btnDown := widget.NewButton(t("MoveDown"), func() {
 		for i := len(files) - 2; i >= 0; i-- {
 			if fileChecks[i].Checked && !fileChecks[i+1].Checked {
 				files[i], files[i+1] = files[i+1], files[i]
@@ -122,14 +171,14 @@ func main() {
 		refreshList()
 	})
 
-	btnClear := widget.NewButton("Clear List", func() {
+	btnClear := widget.NewButton(t("ClearList"), func() {
 		files = []string{}
 		refreshList()
 	})
 
-	btnMerge := widget.NewButton("Merge", func() {
+	btnMerge := widget.NewButton(t("Merge"), func() {
 		if len(files) == 0 {
-			dialog.ShowInformation("Error", "No files to merge.", w)
+			dialog.ShowInformation("Error", t("ErrorNoFiles"), w)
 			return
 		}
 		outFile, err := selectSaveFileWindows()
@@ -141,43 +190,39 @@ func main() {
 			dialog.ShowError(fmt.Errorf("Merge failed: %w", err), w)
 			return
 		}
-		dialog.ShowInformation("Success", "Merged successfully:\n"+outFile, w)
+		dialog.ShowInformation("Success", t("SuccessMerged")+" "+outFile, w)
 	})
 
-	docText := `=== PDF Merger - Documentation ===
-
-1. Add PDF files
-   Click "Add PDF(s)" to select one or more PDF files.
-
-2. Arrange the order
-   Check one or more files, then click "Move Up" or "Move Down".
-   The order shown will be the order of pages in the final PDF.
-
-3. Remove or clear
-   - "Remove" deletes only the checked files.
-   - "Clear List" removes all files from the list.
-
-4. Merge
-   Click "Merge" and choose a destination file name.
-   The software will create a single merged PDF file.
-
---- ⚠️ Known Issue ---
-If you choose as output file a PDF that is already in the list:
-- the resulting file will be empty and corrupted
-- the program will report it as an empty file
-
-Solution:
-Always use a different name for the output file (e.g. merged_result.pdf).`
-
-	btnDoc := widget.NewButton("Documentation", func() {
-		dialog.ShowInformation("Documentation", docText, w)
+	btnDoc := widget.NewButton(t("Documentation"), func() {
+		dialog.ShowInformation(t("DocTitle"), t("DocText"), w)
 	})
 
-	// --- Layout ---
+	langSelect := widget.NewSelect([]string{"English", "Français"}, func(choice string) {
+		switch choice {
+		case "Français":
+			initI18n("fr")
+		default:
+			initI18n("en")
+		}
+		w.SetTitle(t("WindowTitle"))
+		btnAdd.SetText(t("AddPDF"))
+		btnRemove.SetText(t("Remove"))
+		btnUp.SetText(t("MoveUp"))
+		btnDown.SetText(t("MoveDown"))
+		btnClear.SetText(t("ClearList"))
+		btnMerge.SetText(t("Merge"))
+		btnDoc.SetText(t("Documentation"))
+		w.Content().Refresh()
+	})
+	if systemLang == "fr" {
+		langSelect.SetSelected("Français")
+	} else {
+		langSelect.SetSelected("English")
+	}
+
 	scroll := container.NewVScroll(listContainer)
 	scroll.SetMinSize(fyne.NewSize(450, 400))
-
-	buttons := container.NewVBox(btnAdd, btnRemove, btnUp, btnDown, btnClear, btnMerge, btnDoc)
+	buttons := container.NewVBox(langSelect, btnAdd, btnRemove, btnUp, btnDown, btnClear, btnMerge, btnDoc)
 	content := container.NewHSplit(scroll, buttons)
 	content.Offset = 0.75
 	w.SetContent(content)
