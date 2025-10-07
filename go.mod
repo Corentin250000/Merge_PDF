@@ -4,8 +4,8 @@ go 1.25.1
 
 require (
 	fyne.io/fyne/v2 v2.6.3
-	github.com/pdfcpu/pdfcpu v0.11.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
+	github.com/pdfcpu/pdfcpu v0.11.0
 	golang.org/x/text v0.29.0
 )
 
