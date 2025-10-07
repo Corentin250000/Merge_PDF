@@ -4,6 +4,8 @@ FusionPDF is a simple graphical tool that allows you to **merge multiple PDF fil
 It is written in **Go**, using [Fyne](https://fyne.io) for the GUI and [pdfcpu](https://github.com/pdfcpu/pdfcpu) for PDF processing.  
 The application is fully **portable** - no installation or dependencies required.
 
+---
+
 ## ✨ Features
 
 - Add one or more PDF files to the list.  
@@ -12,6 +14,8 @@ The application is fully **portable** - no installation or dependencies required
 - Merge selected files into one combined PDF.  
 - Built-in multilingual interface (English, French, German, Spanish, Italian).  
 - Integrated documentation.  
+
+---
 
 ## ⚙️ Installation
 
@@ -44,6 +48,8 @@ To build for **Linux**:
 go build -ldflags "-s -w" -o MergePDF .
 ```
 
+---
+
 ## 🖥️ Usage
 
 Launch **MergePDF.exe** or **MergePDF**.
@@ -57,6 +63,8 @@ Remove a file or use **“Clear List”** to start fresh.
 Click **“Merge”**, choose an output file name, and confirm.
 
 Check the generated PDF file.
+
+---
 
 ## ⚠️ Known Issue
 
@@ -82,12 +90,16 @@ Automatic **system language detection** (Windows and Linux).
 You can manually switch the language directly from within the application.  
 All translations are stored **inside the binary** via Go’s [`embed`](https://pkg.go.dev/embed).
 
+---
+
 ## 📚 Built-in documentation
 
 A **“Documentation”** button in the interface opens a user guide containing:  
 - usage steps,  
 - common errors and their solutions,  
 - a warning about the known problem. 
+
+---
 
 ## 🧩 Internal Structure
 
@@ -114,6 +126,8 @@ Merge_PDF/
   └── utils.go
 ```
 
+---
+
 ## 🧠 Platform Compatibility
 
 This project has been **fully tested and confirmed to work on Windows**.
@@ -125,6 +139,7 @@ If you plan to run or build on Linux:
 - The PowerShell-based file dialogs are automatically replaced with native Fyne dialogs.
 - Language detection will use the `LANG` environment variable.
 
+---
 
 ## 📜 License
 
