@@ -8,11 +8,14 @@ import (
 )
 
 func main() {
+	// Detect system language and initialize localization
 	systemLang := os_wrappers.GetSystemLangCode()
 	i18n.InitI18n(systemLang)
 
+	// Create main app instance
 	a := app.NewWithID("com.ceramaret.fusionpdf")
-	w := ui.CreateMainWindow(a)
 
+	// Create and show main window
+	w := ui.CreateMainWindow(a)
 	w.ShowAndRun()
 }

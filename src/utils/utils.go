@@ -6,9 +6,9 @@ import (
 	"merge_pdf/src/i18n"
 )
 
-// ChangeLanguage met à jour la langue et tout le texte de l'interface.
+// ChangeLanguage updates the application language and refreshes all UI elements.
 func ChangeLanguage(choice string, w fyne.Window, btnAdd, btnRemove, btnUp, btnDown, btnClear, btnMerge, btnDoc *widget.Button, langSelect *widget.Select) {
-	// --- Sélection de la langue ---
+	// Select the corresponding language
 	switch choice {
 	case "Français":
 		i18n.InitI18n("fr")
@@ -22,10 +22,10 @@ func ChangeLanguage(choice string, w fyne.Window, btnAdd, btnRemove, btnUp, btnD
 		i18n.InitI18n("en")
 	}
 
-	// --- Mise à jour du titre de la fenêtre ---
+	// Update window title
 	w.SetTitle(i18n.T("WindowTitle"))
 
-	// --- Mise à jour des libellés de tous les boutons ---
+	// Update all UI button labels
 	btnAdd.SetText(i18n.T("AddPDF"))
 	btnRemove.SetText(i18n.T("Remove"))
 	btnUp.SetText(i18n.T("MoveUp"))
@@ -34,7 +34,7 @@ func ChangeLanguage(choice string, w fyne.Window, btnAdd, btnRemove, btnUp, btnD
 	btnMerge.SetText(i18n.T("Merge"))
 	btnDoc.SetText(i18n.T("Documentation"))
 
-	// --- Mise à jour des options du menu de langue ---
+	// Refresh language selector options
 	langSelect.Options = []string{"English", "Français", "Deutsch", "Español", "Italiano"}
 	langSelect.Refresh()
 }

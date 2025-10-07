@@ -11,12 +11,13 @@ import (
 	"fyne.io/fyne/v2/dialog"
 )
 
-// Windows kernel32 for language detection
+// Windows kernel32 DLL for user language detection
 var (
 	kernel32               = syscall.NewLazyDLL("kernel32.dll")
 	procGetUserDefaultLang = kernel32.NewProc("GetUserDefaultUILanguage")
 )
 
+// GetWindowsLangCode detects the Windows UI language
 func GetWindowsLangCode() string {
 	r1, _, _ := procGetUserDefaultLang.Call()
 	langID := uint16(r1)
@@ -37,6 +38,7 @@ func GetWindowsLangCode() string {
 	}
 }
 
+// GetSystemLangCode returns the OS language code (Windows or Linux)
 func GetSystemLangCode() string {
 	if runtime.GOOS == "windows" {
 		return GetWindowsLangCode()
@@ -48,6 +50,7 @@ func GetSystemLangCode() string {
 	return "en"
 }
 
+// SelectMultipleFiles opens a dialog allowing users to select multiple PDF files
 func SelectMultipleFiles(main fyne.Window) ([]string, error) {
 	if runtime.GOOS == "windows" {
 		return SelectMultipleFilesWindows()
@@ -64,6 +67,7 @@ func SelectMultipleFiles(main fyne.Window) ([]string, error) {
 	return files, nil
 }
 
+// SelectMultipleFilesWindows uses PowerShell to open a multi-file dialog on Windows
 func SelectMultipleFilesWindows() ([]string, error) {
 	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
 $fd = New-Object System.Windows.Forms.OpenFileDialog
@@ -83,6 +87,7 @@ if($fd.ShowDialog() -eq "OK"){ $fd.FileNames }`
 	return files, nil
 }
 
+// SelectSaveFile opens a dialog to choose a destination file path
 func SelectSaveFile(main fyne.Window) (string, error) {
 	if runtime.GOOS == "windows" {
 		return SelectSaveFileWindows()
@@ -99,6 +104,7 @@ func SelectSaveFile(main fyne.Window) (string, error) {
 	return out, nil
 }
 
+// SelectSaveFileWindows uses PowerShell to open a save dialog on Windows
 func SelectSaveFileWindows() (string, error) {
 	ps := `[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
 $fd = New-Object System.Windows.Forms.SaveFileDialog

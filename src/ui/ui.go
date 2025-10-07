@@ -22,7 +22,7 @@ func CreateMainWindow(a fyne.App) fyne.Window {
 	fileChecks := []*widget.Check{}
 	listContainer := container.NewVBox()
 
-	// --- Fonction de mise à jour de la liste ---
+	// --- Function to refresh the file list ---
 	refreshList := func() {
 		listContainer.Objects = nil
 		fileChecks = []*widget.Check{}
@@ -34,7 +34,7 @@ func CreateMainWindow(a fyne.App) fyne.Window {
 		listContainer.Refresh()
 	}
 
-	// --- Boutons principaux ---
+	// --- Main buttons ---
 	btnAdd := widget.NewButton(i18n.T("AddPDF"), func() {
 		selectedFiles, err := os_wrappers.SelectMultipleFiles(w)
 		if err != nil {
@@ -100,12 +100,12 @@ func CreateMainWindow(a fyne.App) fyne.Window {
 		dialog.ShowInformation("Success", i18n.T("SuccessMerged")+" "+outFile, w)
 	})
 
-	// --- Documentation dynamique ---
+	// --- Dynamic documentation ---
 	btnDoc := widget.NewButton(i18n.T("Documentation"), func() {
 		dialog.ShowInformation(i18n.T("DocTitle"), i18n.T("DocText"), w)
 	})
 
-	// --- Sélecteur de langue ---
+	// --- Language selector ---
 	var langSelect *widget.Select
 	langSelect = widget.NewSelect(
 		[]string{"English", "Français", "Deutsch", "Español", "Italiano"},
@@ -114,7 +114,7 @@ func CreateMainWindow(a fyne.App) fyne.Window {
 		},
 	)
 
-	// --- Layout général ---
+	// --- Main layout ---
 	scroll := container.NewVScroll(listContainer)
 	scroll.SetMinSize(fyne.NewSize(450, 400))
 
