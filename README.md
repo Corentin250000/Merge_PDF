@@ -159,7 +159,7 @@ Merge_PDF/
 This project has been **fully tested and confirmed to work on Windows**.
 
 The application **should also work on Linux**, as it uses cross-platform  
-Go and Fyne libraries — however, **Linux compatibility has not yet been tested**.
+Go and Fyne libraries — however, **Linux compatibility has been tested on Fedora, but not on Ubuntu / Debian**.
 
 If you plan to run or build on **Linux**:
 - The PowerShell-based file dialogs **are automatically** replaced with native Fyne dialogs.
@@ -172,7 +172,7 @@ If you plan to run or build on **Linux**:
 | Platform | Status | Notes |
 |-----------|---------|-------|
 | Windows 10/11 | ✅ Stable | Fully portable (`MergePDF.exe`) |
-| Linux (Fedora / Ubuntu) | ⚠️ Working | Tested; minor GUI variations possible |
+| Linux (Fedora / Ubuntu) | ⚠️ Working | Tested (only on Fedora); minor GUI variations possible |
 
 ---
 
