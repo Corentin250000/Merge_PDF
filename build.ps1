@@ -1,9 +1,9 @@
 # ==================================================================
-# FusionPDF - Build and Run Script
+# MergePDF - Build and Run Script
 # Compatible: Windows PowerShell 5+ / PowerShell Core 7+
 # ==================================================================
 
-Write-Host "=== FusionPDF Build Script ===" -ForegroundColor Cyan
+Write-Host "=== MergePDF Build Script ===" -ForegroundColor Cyan
 
 # --------------------------
 # Step 1: Check if Go is installed
@@ -47,8 +47,8 @@ Write-Host "Dependencies installed successfully." -ForegroundColor Green
 # --------------------------
 # Step 4: Build the binary
 # --------------------------
-$buildPath = "FusionPDF.exe"
-Write-Host "`nBuilding FusionPDF..." -ForegroundColor Yellow
+$buildPath = "MergePDF.exe"
+Write-Host "`nBuilding MergePDF..." -ForegroundColor Yellow
 go build -ldflags="-s -w -H=windowsgui" -o $buildPath .
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed. Check for errors above." -ForegroundColor Red
@@ -59,7 +59,7 @@ Write-Host "Build succeeded: $buildPath" -ForegroundColor Green
 # --------------------------
 # Step 5: Run the application
 # --------------------------
-Write-Host "`nLaunching FusionPDF..." -ForegroundColor Cyan
-Start-Process -FilePath ".\FusionPDF.exe"
+Write-Host "`nLaunching MergePDF..." -ForegroundColor Cyan
+Start-Process -FilePath ".\MergePDF.exe"
 
 Write-Host "`n=== Build & Launch complete ===" -ForegroundColor Green

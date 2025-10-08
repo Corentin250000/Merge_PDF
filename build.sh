@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ============================================================
-# FusionPDF - Build and Run Script for Linux
+# MergePDF - Build and Run Script for Linux
 # Compatible with APT (Ubuntu/Debian) and DNF (Fedora/RHEL)
 # ============================================================
 
 set -e
 
-echo "=== FusionPDF Build Script (Linux) ==="
+echo "=== MergePDF Build Script (Linux) ==="
 
 # --------------------------
 # Step 1: Check if Go is installed
@@ -74,14 +74,14 @@ fi
 # Step 5: Build the binary
 # --------------------------
 echo
-echo "Building FusionPDF..."
-go build -ldflags="-s -w" -o FusionPDF .
-echo "Build succeeded: ./FusionPDF"
+echo "Building MergePDF..."
+go build -ldflags="-s -w" -o MergePDF .
+echo "Build succeeded: ./MergePDF"
 
 # --------------------------
 # Step 6: Run the application
 # --------------------------
 echo
-echo "Launching FusionPDF..."
-./FusionPDF &
+echo "Launching MergePDF..."
+./MergePDF &
 echo "=== Build & Launch complete ==="
