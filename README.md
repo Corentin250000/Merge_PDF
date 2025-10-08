@@ -1,52 +1,75 @@
-# FusionPDF
+# 🧩 MergePDF
 
-FusionPDF is a simple graphical tool that allows you to **merge multiple PDF files** into a single document.  
-It is written in **Go**, using [Fyne](https://fyne.io) for the GUI and [pdfcpu](https://github.com/pdfcpu/pdfcpu) for PDF processing.  
-The application is fully **portable** - no installation or dependencies required.
+MergePDF is a simple graphical application that allows you to **merge multiple PDF files** into a single document.  
+It is developed in **Go**, using [Fyne](https://fyne.io) for the user interface and [pdfcpu](https://github.com/pdfcpu/pdfcpu) for PDF processing.  
+The application produces a **standalone, portable binary** that runs without external dependencies.
 
 ---
 
 ## ✨ Features
 
-- Add one or more PDF files to the list.  
+- Add one or more PDF files (multi-selection supported).  
 - Reorder the list (Move Up / Move Down).  
-- Remove selected files or clear the entire list.  
-- Merge selected files into one combined PDF.  
-- Built-in multilingual interface (English, French, German, Spanish, Italian).  
-- Integrated documentation.  
+- Delete one or several files, or clear the entire list.  
+- Merge selected files into a single PDF.  
+- Integrated documentation and multilingual support.  
+- Fully portable executable — no installer needed.
+
+> ⚠️ **Note**:  
+> The software is fully portable on **Windows**.  
+> If you need to share it on **Linux**, users need to **build it** using the `build.sh` script.  
 
 ---
 
 ## ⚙️ Installation
 
-### 1. Prerequisites
-- [Go 1.22+](https://go.dev/dl/) installed.  
-- Go will automatically download the required modules on build.
-
-### 2. Clone the project
+### 1. Clone the project
 ```bash
 git clone https://github.com/Ceramaret-SA/Merge_PDF.git
 cd Merge_PDF
 ```
 
-### 3. Initialize dependencies
-```bash
-go mod tidy
-```
+### 2. Build
 
-### 4. Build
+#### 1. Windows
 
-To create a **Windows portable executable** without the console window:
+##### Build automatically
+Use the provided PowerShell script:
 
 ```powershell
-go build -ldflags "-s -w -H=windowsgui" -o MergePDF.exe .
+.\build.ps1
 ```
 
-To build for **Linux**:
+This script will:
+- Check if Go 1.25.1 is installed (install it if missing),
+- Install all Go dependencies,
+- Compile `MergePDF.exe` as a GUI app (no console window),
+- Launch it automatically.
+
+---
+
+#### 2. Linux (Fedora / Ubuntu / Debian)
+
+##### Build automatically
+Use the provided Bash script:
 
 ```bash
-go build -ldflags "-s -w" -o MergePDF .
+.\build.sh
 ```
+
+This script will:
+- Checks for Go 1.25.1 and installs it if needed (via APT or DNF),
+- Installs Fyne dependencies (`libX11-dev`, `libGL`, etc.),
+- Compiles the `MergePDF` binary,
+- Runs it automatically.
+
+> ⚠️ **Warning**:  
+> You need to be connected as an **administrator** (`sudo`) to launch the build script.   
+
+> ⚠️ **Note**:  
+> The program is fully functional on **Windows**.  
+> On **Linux**, it works correctly on Fedora and Ubuntu, but has not yet been extensively tested on other distributions.  
+> Some GUI behaviors (e.g., file dialogs) may vary slightly depending on your desktop environment.  
 
 ---
 
@@ -107,6 +130,8 @@ A **“Documentation”** button in the interface opens a user guide containing:
 Merge_PDF/
 ├── README.md
 ├── go.mod
+├── build.ps1
+├── build.sh
 ├── go.sum
 ├── main.go
 └── src/
@@ -119,7 +144,8 @@ Merge_PDF/
 │ │ ├── active.es.json
 │ │ └── active.it.json
 ├── os_wrappers/
-│ └── os_wrappers.go
+| ├── os_wrappers_linux.go
+│ └── os_wrappers_windows.go
 ├── ui/
 │ └── ui.go
 └── utils/
@@ -135,9 +161,18 @@ This project has been **fully tested and confirmed to work on Windows**.
 The application **should also work on Linux**, as it uses cross-platform  
 Go and Fyne libraries — however, **Linux compatibility has not yet been tested**.
 
-If you plan to run or build on Linux:
-- The PowerShell-based file dialogs are automatically replaced with native Fyne dialogs.
+If you plan to run or build on **Linux**:
+- The PowerShell-based file dialogs **are automatically** replaced with native Fyne dialogs.
 - Language detection will use the `LANG` environment variable.
+
+---
+
+## 🧱 Compatibility
+
+| Platform | Status | Notes |
+|-----------|---------|-------|
+| Windows 10/11 | ✅ Stable | Fully portable (`MergePDF.exe`) |
+| Linux (Fedora / Ubuntu) | ⚠️ Working | Tested; minor GUI variations possible |
 
 ---
 
