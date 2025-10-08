@@ -1,0 +1,4 @@
+# merge_pdf/src/os_wrappers
+src/os_wrappers/os_wrappers.go:16:35: undefined: syscall.NewLazyDLL
+src/os_wrappers/os_wrappers.go:78:41: unknown field HideWindow in struct literal of type "syscall".SysProcAttr
+src/os_wrappers/os_wrappers.go:115:41: unknown field HideWindow in struct literal of type "syscall".SysProcAttr
