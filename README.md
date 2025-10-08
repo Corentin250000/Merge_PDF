@@ -1,85 +1,180 @@
-# MergePDF
+# 🧩 MergePDF
 
-MergePDF is a lightweight graphical application that allows you to **merge multiple PDF files** into a single document.  
-It is developed in **Go**, using [Fyne](https://fyne.io) for the interface and [pdfcpu](https://github.com/pdfcpu/pdfcpu) for PDF processing.  
+MergePDF is a simple graphical application that allows you to **merge multiple PDF files** into a single document.  
+It is developed in **Go**, using [Fyne](https://fyne.io) for the user interface and [pdfcpu](https://github.com/pdfcpu/pdfcpu) for PDF processing.  
+The application produces a **standalone, portable binary** that runs without external dependencies.
 
-The application produces a **single, portable executable** — no installation or external files required.
+---
 
 ## ✨ Features
 
-- Add one or more PDF files at once.  
-- Reorder the list with **Move Up** / **Move Down**.  
-- Remove selected files or **Clear the entire list**.  
-- Merge all selected files into a single PDF document.  
-- Choose the **output filename** freely.  
-- Built-in **documentation** button for help.  
-- **Automatic language detection** (English, French, German, Spanish, Italian).  
-- **Manual language selector** in the interface.  
-- All language files are **embedded inside the executable** (no external dependencies).
+- Add one or more PDF files (multi-selection supported).  
+- Reorder the list (Move Up / Move Down).  
+- Delete one or several files, or clear the entire list.  
+- Merge selected files into a single PDF.  
+- Integrated documentation and multilingual support.  
+- Fully portable executable — no installer needed.
 
-## 📥 Installation
+> ⚠️ **Note**:  
+> The software is fully portable on **Windows**.  
+> If you need to share it on **Linux**, users need to **build it** using the `build.sh` script.  
 
-### 1. Prerequisites
-- [Go 1.22+](https://go.dev/dl/) installed if you want to build the binary yourself.  
-- No prerequisites required to **run** the `.exe` file.
+---
 
-### 2. Clone the project
+## ⚙️ Installation
+
+### 1. Clone the project
 ```bash
 git clone https://github.com/Ceramaret-SA/Merge_PDF.git
-cd MergePDF
+cd Merge_PDF
 ```
 
-### 3. Initialize dependencies
+### 2. Build
+
+#### 1. Windows
+
+##### Build automatically
+Use the provided PowerShell script:
+
+```powershell
+.\build.ps1
+```
+
+This script will:
+- Check if Go 1.25.1 is installed (install it if missing),
+- Install all Go dependencies,
+- Compile `MergePDF.exe` as a GUI app (no console window),
+- Launch it automatically.
+
+---
+
+#### 2. Linux (Fedora / Ubuntu / Debian)
+
+##### Build automatically
+Use the provided Bash script:
+
 ```bash
-go mod tidy
+.\build.sh
 ```
 
-### 4. Build
+This script will:
+- Checks for Go 1.25.1 and installs it if needed (via APT or DNF),
+- Installs Fyne dependencies (`libX11-dev`, `libGL`, etc.),
+- Compiles the `MergePDF` binary,
+- Runs it automatically.
 
-```bash
-go build -ldflags "-s -w -H=windowsgui" -o MergePDF.exe main.go
-```
+> ⚠️ **Warning**:  
+> You need to be connected as an **administrator** (`sudo`) to launch the build script.   
 
-This will generate a **standalone `MergePDF.exe`** containing all resources (translations and interface).  
-It can be copied and executed on any Windows system — **no `lang/` folder needed**.
+> ⚠️ **Note**:  
+> The program is fully functional on **Windows**.  
+> On **Linux**, it works correctly on Fedora and Ubuntu, but has not yet been extensively tested on other distributions.  
+> Some GUI behaviors (e.g., file dialogs) may vary slightly depending on your desktop environment.  
+
+---
 
 ## 🖥️ Usage
 
-1. Launch **MergePDF.exe**.  
-2. Add one or more PDF files using **“Add PDF(s)”**.  
-3. Reorder them with **“Move Up”** and **“Move Down”**.  
-4. Remove selected files or click **“Clear List”** to start over.  
-5. Click **“Merge”** and choose a name for the merged file.  
-6. Check the resulting file to confirm the merge.
+Launch **MergePDF.exe** or **MergePDF**.
 
-## ⚠️ Known issue
+Add PDF files using **“Add PDF”**.
 
-If you select as **output file** a PDF that is already present in the merge list:
+Reorder them with **“Move Up”** or **“Move Down”**.
 
-- the generated file will be **empty and corrupted**,  
-- the program will report that the file is empty.
+Remove a file or use **“Clear List”** to start fresh.
 
-👉 **Solution:** Always choose a **different name** for the output file (e.g. `merged_result.pdf`).
+Click **“Merge”**, choose an output file name, and confirm.
 
-## 🌍 Language support
+Check the generated PDF file.
 
-- Automatic detection of your system language (Windows).  
-- Supported languages:  
-  - English 🇬🇧  
-  - French 🇫🇷  
-  - German 🇩🇪  
-  - Spanish 🇪🇸  
-  - Italian 🇮🇹  
-- A **language selector** in the interface lets you switch manually at any time.  
-- All translations are stored **inside the binary** via Go’s [`embed`](https://pkg.go.dev/embed).
+---
+
+## ⚠️ Known Issue
+
+If the **output file** is also present in the list of PDFs to merge:
+
+- The generated file will be **empty and corrupted**.  
+- The program will display an **“empty file”** error.
+
+**Solution:** Always specify a **new file name** for the output  
+(for example: `merged_result.pdf`).
+
+## 🌍 Language Support
+
+Automatic **system language detection** (Windows and Linux).
+
+**Supported languages:**
+- 🇬🇧 English  
+- 🇫🇷 French  
+- 🇩🇪 German  
+- 🇪🇸 Spanish  
+- 🇮🇹 Italian  
+
+You can manually switch the language directly from within the application.  
+All translations are stored **inside the binary** via Go’s [`embed`](https://pkg.go.dev/embed).
+
+---
 
 ## 📚 Built-in documentation
 
 A **“Documentation”** button in the interface opens a user guide containing:  
 - usage steps,  
 - common errors and their solutions,  
-- a warning about the known problem.  
+- a warning about the known problem. 
 
+---
+
+## 🧩 Internal Structure
+
+```txt
+Merge_PDF/
+├── README.md
+├── go.mod
+├── build.ps1
+├── build.sh
+├── go.sum
+├── main.go
+└── src/
+├── i18n/
+│ ├── i18n.go
+│ └── lang/
+│ │ ├── active.en.json
+│ │ ├── active.fr.json
+│ │ ├── active.de.json
+│ │ ├── active.es.json
+│ │ └── active.it.json
+├── os_wrappers/
+| ├── os_wrappers_linux.go
+│ └── os_wrappers_windows.go
+├── ui/
+│ └── ui.go
+└── utils/
+  └── utils.go
+```
+
+---
+
+## 🧠 Platform Compatibility
+
+This project has been **fully tested and confirmed to work on Windows**.
+
+The application **should also work on Linux**, as it uses cross-platform  
+Go and Fyne libraries — however, **Linux compatibility has been tested on Fedora, but not on Ubuntu / Debian**.
+
+If you plan to run or build on **Linux**:
+- The PowerShell-based file dialogs **are automatically** replaced with native Fyne dialogs.
+- Language detection will use the `LANG` environment variable.
+
+---
+
+## 🧱 Compatibility
+
+| Platform | Status | Notes |
+|-----------|---------|-------|
+| Windows 10/11 | ✅ Stable | Fully portable (`MergePDF.exe`) |
+| Linux (Fedora / Ubuntu) | ⚠️ Working | Tested (only on Fedora); minor GUI variations possible |
+
+---
 
 ## 📜 License
 
