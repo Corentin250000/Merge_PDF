@@ -5,13 +5,13 @@ package os_wrappers
 
 import (
 	"os"
+	"os/exec"
+	"strings"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/storage"
 )
 
-// Detects system language on Linux
+// Detect system language
 func GetSystemLangCode() string {
 	lang := os.Getenv("LANG")
 	if len(lang) >= 2 {
@@ -20,28 +20,38 @@ func GetSystemLangCode() string {
 	return "en"
 }
 
-// Opens a non-blocking file dialog (single selection, reliable on Linux)
+// Use Zenity for native multi-selection dialog
 func SelectMultipleFiles(main fyne.Window) ([]string, error) {
-	var files []string
-	d := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
-		if reader != nil {
-			files = append(files, reader.URI().Path())
-		}
-	}, main)
-	d.SetFilter(storage.NewExtensionFileFilter([]string{".pdf"}))
-	d.Show()
+	cmd := exec.Command("zenity",
+		"--file-selection",
+		"--multiple",
+		"--title=Select PDF files",
+		"--file-filter=*.pdf")
+
+	out, err := cmd.Output()
+	if err != nil {
+		// Zenity cancelled -> no file selected
+		return nil, nil
+	}
+
+	// Zenity separates multiple paths with "|"
+	files := strings.Split(strings.TrimSpace(string(out)), "|")
 	return files, nil
 }
 
-// Opens a save dialog for the output PDF
+// Native save dialog using Zenity
 func SelectSaveFile(main fyne.Window) (string, error) {
-	var out string
-	d := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
-		if writer != nil {
-			out = writer.URI().Path()
-		}
-	}, main)
-	d.SetFilter(storage.NewExtensionFileFilter([]string{".pdf"}))
-	d.Show()
-	return out, nil
+	cmd := exec.Command("zenity",
+		"--file-selection",
+		"--save",
+		"--confirm-overwrite",
+		"--title=Save merged PDF as",
+		"--file-filter=*.pdf")
+
+	out, err := cmd.Output()
+	if err != nil {
+		return "", nil
+	}
+
+	return strings.TrimSpace(string(out)), nil
 }
