@@ -12,10 +12,7 @@ func main() {
 	systemLang := os_wrappers.GetSystemLangCode()
 	i18n.InitI18n(systemLang)
 
-	// Create main app instance
-	a := app.NewWithID("com.ceramaret.fusionpdf")
-
-	// Create and show main window
+	a := app.NewWithID("com.corentin250000.mergepdf")
 	w := ui.CreateMainWindow(a)
 	w.ShowAndRun()
 }
